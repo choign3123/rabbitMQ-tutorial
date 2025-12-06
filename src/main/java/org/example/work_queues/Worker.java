@@ -19,6 +19,7 @@ public class Worker {
         Channel channel = connection.createChannel();
 
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        channel.basicQos(1); // cousumer는 최대 미처리 메시지를 n개까지 받을 수 있도록 함. n개 넘어가는 메시지는 받지 않음. autoAck = false일때만 의미 있음
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
@@ -31,9 +32,10 @@ public class Worker {
                 throw new RuntimeException(e);
             } finally {
                 System.out.println(" [x] Done");
+                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
             }
         };
-        boolean autoAck = true;
+        boolean autoAck = false; // consumer가 mq로 ack를 직접 날려야만 mq는 queue에서 메시지를 삭제할 수 있음
         channel.basicConsume(QUEUE_NAME, autoAck, deliverCallback, consumerTag -> { });
     }
 
